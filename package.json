@@ -1,0 +1,11 @@
+{
+  "name": "collegestuffsale",
+  "version": "1.0.0",
+  "description": "Web application that allows students to buy and sell",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Enoch Ko",
+  "license": "ISC"
+}
