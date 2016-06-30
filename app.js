@@ -1,8 +1,16 @@
 var express = require("express");
 var bodyParser = require("body-parser");
 var mongoose = require("mongoose");
+var sessions = require("client-sessions");
 var app = express();
+//middleware
 app.use(bodyParser.urlencoded({extended: true}));
+app.use(sessions({
+	cookieName: "session",
+	secret: "asdkfjlk23j4lk2jlekjsdfjaldsfadf",
+	duration: 30*60*1000,
+	activeDuration: 5*60*1000
+}));
 mongoose.connect("mongodb://localhost:27017/auth");
 var port = process.env.PORT || 3000;
 app.set("view engine", "ejs");
@@ -18,18 +26,38 @@ app.get("/login", function(req, res){
 app.post("/login", function(req, res){
 	User.findOne({email: req.body.email }, function(err, user){
 		if (!user){
+			console.log("invalid email or password");
 			res.render("login", {error: "Invalid email or password."});
 		}else{
 			if (user.password === req.body.password){
-				res.redirect("dashboard");
+				console.log("logged in!");
+				req.session.user = user;
+				res.redirect("/dashboard");
 			}else{
+				console.log("invalid email or password");
 				res.render("login", {error: "Invalid email or password."});
 			}
 		}
 	});
 });
 app.get("/dashboard", function(req, res){
-	res.render("dashboard");
+	if (req.session && req.session.user){
+		User.findOne( {email: req.session.user.email }, function(err, user){
+			console.log(user);
+			if (!user){
+				console.log("User not found");
+
+				req.session.reset();
+				res.redirect("/login");
+			}else{
+				console.log("Logged in")
+				res.locals.user = user;
+				res.render("dashboard");
+			}
+		});
+	}else{
+		res.render("login");
+	}
 });
 app.get("/register", function(req, res){
 	res.render("register", {error: null});
@@ -37,7 +65,6 @@ app.get("/register", function(req, res){
 app.post("/register", function(req, res){
 	User.addUser(req.body, function(err, user){
 		if (err){
-			
 			if (err.code == 11000){
 				err = "That Email has already been taken."
 			}
