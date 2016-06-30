@@ -1,4 +1,5 @@
 var mongoose = require("mongoose");
+var bcrypt = require("bcrypt");
 var Schema = mongoose.Schema;
 var userSchema = new Schema({
 	name: {
@@ -20,7 +21,7 @@ module.exports.addUser = function(user, callback){
 	var newUser = new User();
 	newUser.name = user.name;
 	newUser.email = user.email;
-	newUser.password = user.password;
+	newUser.password = bcrypt.hashSync(user.password, bcrypt.genSaltSync(10));
 	newUser.save(callback);
 }
 

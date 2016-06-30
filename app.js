@@ -1,6 +1,7 @@
 var express = require("express");
 var bodyParser = require("body-parser");
 var mongoose = require("mongoose");
+var bcrypt = require("bcrypt");
 var sessions = require("client-sessions");
 var app = express();
 //middleware
@@ -21,15 +22,16 @@ app.get("/", function(req, res){
 	res.render("index");
 });
 app.get("/login", function(req, res){
-	res.render("login");
+	res.render("login"); 
 });
+//login
 app.post("/login", function(req, res){
 	User.findOne({email: req.body.email }, function(err, user){
 		if (!user){
 			console.log("invalid email or password");
 			res.render("login", {error: "Invalid email or password."});
 		}else{
-			if (user.password === req.body.password){
+			if (bcrypt.compareSync(user.password, req.body.password)){
 				console.log("logged in!");
 				req.session.user = user;
 				res.redirect("/dashboard");
@@ -40,6 +42,7 @@ app.post("/login", function(req, res){
 		}
 	});
 });
+//dashboard -> after login
 app.get("/dashboard", function(req, res){
 	if (req.session && req.session.user){
 		User.findOne( {email: req.session.user.email }, function(err, user){
