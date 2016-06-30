@@ -2,6 +2,7 @@ var express = require("express");
 var bodyParser = require("body-parser");
 var mongoose = require("mongoose");
 var bcrypt = require("bcrypt");
+var csurf = require("csurf");
 var sessions = require("client-sessions");
 var app = express();
 //middleware
@@ -10,8 +11,12 @@ app.use(sessions({
 	cookieName: "session",
 	secret: "asdkfjlk23j4lk2jlekjsdfjaldsfadf",
 	duration: 30*60*1000,
-	activeDuration: 5*60*1000
+	activeDuration: 5*60*1000,
+	httpOnly: true,
+	secure: true,
+	ephemeral: true
 }));
+app.use(csurf());
 mongoose.connect("mongodb://localhost:27017/auth");
 var port = process.env.PORT || 3000;
 app.set("view engine", "ejs");
@@ -22,7 +27,7 @@ app.get("/", function(req, res){
 	res.render("index");
 });
 app.get("/login", function(req, res){
-	res.render("login"); 
+	res.render("login", { csrfToken: req.csrfToken() }); 
 });
 //login
 app.post("/login", function(req, res){
@@ -49,7 +54,6 @@ app.get("/dashboard", function(req, res){
 			console.log(user);
 			if (!user){
 				console.log("User not found");
-
 				req.session.reset();
 				res.redirect("/login");
 			}else{
@@ -63,7 +67,7 @@ app.get("/dashboard", function(req, res){
 	}
 });
 app.get("/register", function(req, res){
-	res.render("register", {error: null});
+	res.render("register", { csrfToken: req.csrfToken() });
 });
 app.post("/register", function(req, res){
 	User.addUser(req.body, function(err, user){
